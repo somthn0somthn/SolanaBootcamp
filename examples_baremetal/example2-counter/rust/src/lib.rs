@@ -33,6 +33,8 @@ pub fn process_instruction(
 
     msg!("[lib] hello account: {:?}", hello_account.key);
 
+    msg!("THE HELLO ACCOUNT HAS A BALANCE OF **{}** LAMPORTS", hello_account.lamports());
+
     // The account must be owned by the program in order to modify its data
     if hello_account.owner != program_id {
         msg!(" Greeted account does not have the correct program id");
@@ -56,6 +58,12 @@ pub fn process_instruction(
     greeting_struct.serialize(&mut &mut hello_account.data.borrow_mut()[..])?;
 
     msg!(" Greeted {} time(s)!", greeting_struct.counter);
+    msg!("THE HELLO ACCOUNT HAS A BALANCE OF **{}** LAMPORTS", hello_account.lamports());
+
+    msg!("THE HELLO ACCOUNT HAS A BALANCE OF **{}** LAMPORTS", hello_account.lamports());
+
+    msg!("THE HELLO ACCOUNT HAS A BALANCE OF **{}** LAMPORTS", hello_account.lamports());
+
 
     Ok(())
 }

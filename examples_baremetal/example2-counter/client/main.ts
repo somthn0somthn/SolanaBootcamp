@@ -81,50 +81,19 @@ export async function deployGreetAccount(
 
   console.log("Program ID account: ", programId.toBase58());
 
-  const GREETING_SEED = "hello_this_can_be_anything";
-  let greetedPubkey = await PublicKey.createWithSeed(
-    payer.publicKey,
-    GREETING_SEED,
-    programId
-  );
+  // Incorrect public key
+  let incorrectPubkey = new PublicKey("HzThhJAw99274RoKNfdhnskCdh4wAMFG2X4yBt2KDkgg");
 
-  // Deploy greeting account or increment counter within greetin account already deployed
-  if (!(await checkAccountDeployed(connection, greetedPubkey))) {
-    // size of an account based on serialisation
-    const GREETING_SIZE = borsh.serialize(
-      GreetingSchema,
-      new GreetingAccount()
-    ).length;
+  console.log("Using incorrect public key: ", incorrectPubkey.toBase58());
 
-    console.log(`Account ${greetedPubkey} not deployed, deploying now`);
-    console.log(
-      "Creating account",
-      greetedPubkey.toBase58(),
-      "to say hello to"
-    );
-    const lamports = await connection.getMinimumBalanceForRentExemption(
-      GREETING_SIZE
-    );
-    //Creates transaction object with TransactionInstructions
-    const txInstructions = SystemProgram.createAccountWithSeed({
-      fromPubkey: payer.publicKey,
-      basePubkey: payer.publicKey,
-      // seeds are only used for PDA
-      seed: GREETING_SEED,
-      newAccountPubkey: greetedPubkey,
-      lamports, // Minnimum money to be rent free
-      space: GREETING_SIZE, // Size of the account
-      programId, // Program owner of the this PDA
-    });
-
-    const transaction = new Transaction().add(txInstructions);
-    // Submit transaction that creates account
-    await sendAndConfirmTransaction(connection, transaction, [payer]);
+  // Try to use the incorrect public key instead of the correct one
+  if (!(await checkAccountDeployed(connection, incorrectPubkey))) {
+    console.log(`Incorrect account ${incorrectPubkey} not deployed!`);
   } else {
-    // Increment counter within already deployed greeting account
-    console.log("Writing to the greeting counter", greetedPubkey.toBase58());
+    // Increment counter within already deployed (incorrect) greeting account
+    console.log("Attempting to write to the greeting counter of an incorrect account", incorrectPubkey.toBase58());
     const instruction = new TransactionInstruction({
-      keys: [{ pubkey: greetedPubkey, isSigner: false, isWritable: true }],
+      keys: [{ pubkey: incorrectPubkey, isSigner: false, isWritable: true }],
       programId,
       data: Buffer.alloc(0), // All instructions are hellos
     });
@@ -134,19 +103,19 @@ export async function deployGreetAccount(
       [payer]
     );
   }
-  // retrive the account from the network
-  const accountInfo = await connection.getAccountInfo(greetedPubkey);
+  // Retrieve the account from the network
+  const accountInfo = await connection.getAccountInfo(incorrectPubkey);
   if (accountInfo === null) {
-    throw "Error: cannot find the greeted account";
+    throw "Error: cannot find the incorrect account";
   }
-  // deserialize the account using known schema
+  // Deserialize the account using known schema
   const greeting = borsh.deserialize(
     GreetingSchema,
     GreetingAccount,
     accountInfo.data
   );
   console.log(
-    greetedPubkey.toBase58(),
+    incorrectPubkey.toBase58(),
     "has been greeted",
     greeting.counter,
     "time(s)"
@@ -159,7 +128,7 @@ export async function deployGreetAccount(
 class GreetingAccount {
   counter = 0;
 
-  // constructor is for recosntructing it back from serialsied data
+  // Constructor is for reconstructing it back from serialized data
   constructor(fields: { counter: number } | undefined = undefined) {
     if (fields) {
       this.counter = fields.counter;
